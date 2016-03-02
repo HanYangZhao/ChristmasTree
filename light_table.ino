@@ -1,4 +1,7 @@
 // This #include statement was automatically added by the Particle IDE.
+#include "blynk/blynk.h"
+
+// This #include statement was automatically added by the Particle IDE.
 #include "SparkIntervalTimer/SparkIntervalTimer.h"
 
 // This #include statement was automatically added by the Particle IDE.
@@ -7,19 +10,19 @@
 //#define BLYNK_DEBUG // Uncomment this to see debug prints
 #define BLYNK_PRINT Serial
 #include "blynk/BlynkSimpleParticle.h"
-#define PIXEL_COUNT 360
-#define PIXEL_PIN D1
+#define PIXEL_COUNT 300
+#define PIXEL_PIN D2
 #define PIXEL_TYPE WS2812B
 
 SYSTEM_MODE(AUTOMATIC);
 // You should get Auth Token in the Blynk App.
 // Go to the Project Settings (nut icon).
-char auth[] = "f3671d8e84b04b238f947fbfbfb121c9";
-uint8_t red = 0;
-uint8_t green = 0;
-uint8_t blue = 0;
+char auth[] = "c3b375c3dbca4cf8b9d353b016c603f8";
+uint8_t red = 255;
+uint8_t green = 255;
+uint8_t blue = 255;
 bool manual_spiral = false;
-bool manual_area = false;
+bool manual_area = true;
 int current_pos = 0;
 int spiral_pos = 0;
 bool spiral_down = true;
@@ -34,9 +37,9 @@ int temp_g;
 
 bool rainbow_switch = false;
 
-int interval = 175;
+int interval = 600;
 
-float brightness = 1.0f;
+float brightness = 0.5f;
 
 bool ran_color = false;
 IntervalTimer myTimer;		// 3 for the Core
@@ -52,23 +55,6 @@ void setup()
     led_clear();
 }
 
-// Attach a Button widget (mode: Push) to the Virtual pin 1 - and send sweet tweets!
-BLYNK_WRITE(V1) {
-    if (param.asInt() == 1) { // On button down...
-        //Blynk.begin(auth);
-        //strip.show();
-        led_clear();
-        //theaterChase(strip.Color(127, 127, 127), 50); // White
-        //rainbowCycle(10);
-        //theaterChaseRainbow(50); 
-        //strip.show();
-    }
-    else {
-        led_clear();
-    }
-}
-
-// Attach a Slider widget to the Virtual pin 2 - and control the built-in RGB led!
 BLYNK_WRITE(V2) {
     brightness =  float (param.asInt() / 100.0f);
 }
@@ -79,34 +65,34 @@ BLYNK_WRITE(V3){
     if (manual_spiral && !manual_area){
         if (param.asInt() > current_pos){
             for (int i = 0; i <= param.asInt(); i++){
-                strip.setPixelColor(i, strip.Color(red * brightness, green * brightness , blue * brightness));
+                strip.setPixelColor(i, strip.Color(red * brightness, green * brightness, blue * brightness));
             }
             current_pos = param.asInt();
             strip.show();
         }
-        else{
-            for (int i = strip.numPixels(); i >= param.asInt() ; i--){
-                strip.setPixelColor(i, strip.Color(0, 0 ,0 ) );
+        else {
+            for(int i = strip.numPixels(); i >= param.asInt(); i--){
+                strip.setPixelColor(i, strip.Color(0, 0, 0));
             }
             strip.show();
             current_pos = param.asInt();
         }  
     }
-    
     else if (manual_area && !manual_spiral){
         int offset = 5;
         if (param.asInt() != current_pos){
             for (int i = param.asInt() - offset; i <= param.asInt() + offset; i++){
-                strip.setPixelColor(i, strip.Color(red * brightness, green * brightness , blue * brightness));
+                strip.setPixelColor(i, strip.Color(red * brightness, green * brightness, blue * brightness));
             }
             
             for (int i = strip.numPixels(); i > param.asInt() + offset; i--){
-                strip.setPixelColor(i, strip.Color(0, 0, 0) );
+                strip.setPixelColor(i, strip.Color(0,0,0));
             }
             
             for (int i = 0; i < param.asInt() - offset; i++){
-                strip.setPixelColor(i, strip.Color(0, 0,0) );
+                strip.setPixelColor(i, strip.Color(0,0,0));
             }
+            
             current_pos = param.asInt();
             strip.show();
         }
@@ -131,6 +117,7 @@ BLYNK_WRITE(V7){
     if (param.asInt() == 1){
         led_clear();
         manual_spiral = true;
+        manual_area = false;
     }
 }
 
@@ -138,7 +125,7 @@ BLYNK_WRITE(V7){
 BLYNK_WRITE(V8){
     if (param.asInt() == 1){
         led_clear();
-        myTimer.begin(spiralLED, 10 , hmSec);
+        myTimer.begin(spiralLED,10 , hmSec);
     }
     else if (param.asInt() == 0){
         led_clear();
@@ -147,10 +134,13 @@ BLYNK_WRITE(V8){
 
 //random pulse
 BLYNK_WRITE(V9){
+    
     if (param.asInt() == 1){
         led_clear();
         myTimer2.begin(r_LED, 80, hmSec);
+        
     }
+    
     else if (param.asInt() == 0){
         led_clear();
     }
@@ -161,19 +151,12 @@ BLYNK_WRITE(V10){
     led_clear();
 }
 
-//rainbow switch
-// BLYNK_WRITE(V11){
-//     if(param.asInt() == 1)
-//         rainbow_color = true;
-//     else if(param.asInt() == 0)
-//         rainbow_color = false;
-// }
-
 //random color
 BLYNK_WRITE(V11){
     if (param.asInt() == 1){
         ran_color = true;
     }
+
     else if (param.asInt() == 0){
         ran_color = false;
     }
@@ -182,8 +165,10 @@ BLYNK_WRITE(V11){
 BLYNK_WRITE(V12){
     if (param.asInt() == 1){
         led_clear();
-        rainbow();
+        theaterChaseWhite();
+        //myTimer.begin(theaterChaseWhite , 2000 , hmSec);
     }
+    
     else if (param.asInt() == 0 ){
         led_clear();
     }
@@ -195,6 +180,7 @@ BLYNK_WRITE(V13){
         manual_area = true;
         manual_spiral = false;
     }
+    
     else if (param.asInt() == 0){
         led_clear();
     }
@@ -222,19 +208,21 @@ void loop()
 
 // *** Utility functions
 void ran_blink(void){
-    int offset = 5;
+    int offset = 6;
     int led = random(300);
-    for (int i = led - offset; i <= led + offset; i++){
+        
+    for (int i = led - offset ; i <= led + offset ; i++){
         strip.setPixelColor(i, strip.Color(red * brightness, green * brightness , blue * brightness));
     }
-    for (int i = strip.numPixels(); i > led + offset ; i--){
+            
+    for (int i = strip.numPixels() ; i > led + offset ; i--){
         strip.setPixelColor(i, strip.Color(0, 0, 0));
     }
-    for (int i = 0; i < led - offset; i++){
+            
+    for (int i = 0 ; i < led - offset ; i++){
         strip.setPixelColor(i, strip.Color(0, 0, 0));
     }
     strip.show();
-        
 }
 
 void spiralLED( void ){
@@ -255,7 +243,8 @@ void spiralLED( void ){
         temp_g = green;
     }
     if (spiral_down){
-        for( int i = 0; i <= spiral_pos; i++){
+
+        for (int i = 0 ; i <= spiral_pos; i++){
                 strip.setPixelColor(i, strip.Color(temp_r * brightness, temp_g * brightness, temp_b * brightness));
         }
         strip.show();
@@ -266,7 +255,8 @@ void spiralLED( void ){
         }
     }
     
-    if (spiral_up) {     
+    if (spiral_up) {
+        
         for (int i = strip.numPixels(); i >= spiral_pos; i--){
             strip.setPixelColor(i, strip.Color(0, 0, 0));
         }
@@ -289,10 +279,15 @@ void led_clear(){
     strip.show();
 }
 
+
 void r_LED(void){
     if (r_counter == 200){
-        for(int i = 0; i < strip.numPixels(); i++){
-            strip.setPixelColor(i,strip.Color(0, 0, 0));
+        for (int i = 0; i < strip.numPixels(); i++){
+            int r = (temp_r - 150 > 0) ?  temp_r - 150  : 0;
+            int g = (temp_g - 150 > 0) ?  temp_g - 150  : 0;
+            int b = (temp_b - 150 > 0) ?  temp_b - 150  : 0;
+            
+            strip.setPixelColor(i,strip.Color(r, g, b));
         }
         strip.show();
         r_counter = 0;
@@ -303,7 +298,7 @@ void r_LED(void){
             temp_b = random(255);
             temp_g = random(255);
         }
-        else if(ran_color && r_counter >= 1) {
+        else if (ran_color && r_counter >= 1) {
             temp_r = temp_r;
             temp_b = temp_b;
             temp_g = temp_g;
@@ -316,63 +311,29 @@ void r_LED(void){
         
         for (int i = 0; i < 10; i++){
             int led = random(0, 360);
-            strip.setPixelColor(led,strip.Color(temp_r * brightness ,temp_g * brightness ,temp_b * brightness));
+            strip.setPixelColor(led, strip.Color(temp_r * brightness ,temp_g * brightness ,temp_b * brightness));
         }
         strip.show();
         r_counter++;
     }
     else if (r_counter > 100){
-
-        for (int i = 0 ; i < 20 ; i++){
-            int led = random(0, 360);
-            strip.setPixelColor(led,strip.Color(0, 0, 0 ));
+        for (int i = 0; i < 20; i++){
+            int led = random(0,360);
+            int r = (temp_r - 150 > 0) ?  temp_r - 150  : 0;
+            int g = (temp_g - 150 > 0) ?  temp_g - 150  : 0;
+            int b = (temp_b - 150 > 0) ?  temp_b - 150  : 0;
+            strip.setPixelColor(led,strip.Color(r, g, b));
         }
         strip.show();
         r_counter++;
     }
 }
 
-void HsvToRgb(double h, double s, double v, byte rgb[]) {
-    double r, g, b;
-
-    int i = int(h * 6);
-    double f = h * 6 - i;
-    double p = v * (1 - s);
-    double q = v * (1 - f * s);
-    double t = v * (1 - (1 - f) * s);
-
-    switch (i % 6){
-        case 0: r = v, g = t, b = p; break;
-        case 1: r = q, g = v, b = p; break;
-        case 2: r = p, g = v, b = t; break;
-        case 3: r = p, g = q, b = v; break;
-        case 4: r = t, g = p, b = v; break;
-        case 5: r = v, g = p, b = q; break;
-    }
-
-    rgb[0] = r * 255;
-    rgb[1] = g * 255;
-    rgb[2] = b * 255;
-}
-
 void colorWipe(uint32_t c, uint8_t wait) {
-  for (uint16_t i =0 ; i <s trip.numPixels(); i++) {
+  for(uint16_t i = 0; i < strip.numPixels(); i++) {
     strip.setPixelColor(i, c);
     strip.show();
     delay(wait);
-  }
-}
-
-// Slightly different, this makes the rainbow equally distributed throughout
-void rainbow() {
-  uint16_t i, j;
-  //for(j=0; j<256*5; j++) { // 5 cycles of all colors on wheel
-    for (i = 0; i < strip.numPixels(); i++ ) {
-      strip.setPixelColor(i, Wheel( ( (i * 256 / strip.numPixels() ) ) & 255));
-  //  }
-    strip.show();
-    //delay(wait);
-    //myTimer.end();
   }
 }
 
@@ -380,10 +341,10 @@ void rainbow() {
 void theaterChaseWhite() {
   uint32_t previous_millis = 0;
   uint32_t current_millis = 0;
-  for (int j = 0; j<10; j++) {  //do 10 cycles of chasing
+  for (int j = 0; j < 10; j++) {  //do 10 cycles of chasing
     for (int q = 0; q < 3; q++) {
-      for (int i = 0; i < strip.numPixels(); i = i + 3) {
-        strip.setPixelColor(i+q, strip.Color(175,175,175));    //turn every third pixel on
+      for (int i=0; i < strip.numPixels(); i = i+3) {
+        strip.setPixelColor(i + q, strip.Color(175, 175, 175));    //turn every third pixel on
       }
       strip.show();
       while (current_millis - previous_millis < 5000){
@@ -391,8 +352,7 @@ void theaterChaseWhite() {
           current_millis = millis();
       }
      // myTimer.end();
-
-      for (int i = 0; i < strip.numPixels(); i = i+3) {
+      for (int i =  0; i < strip.numPixels(); i = i+3) {
         strip.setPixelColor(i + q, 0);        //turn every third pixel off
       }
     }
@@ -404,12 +364,10 @@ void theaterChaseRainbow(uint8_t wait) {
   for (int j = 0; j < 256; j++) {     // cycle all 256 colors in the wheel
     for (int q = 0; q < 3; q++) {
       for (int i = 0; i < strip.numPixels(); i = i+3) {
-        strip.setPixelColor(i + q, Wheel( (i + j) % 255));    //turn every third pixel on
+        strip.setPixelColor(i + q, Wheel( (i+j) % 255));    //turn every third pixel on
       }
       strip.show();
-
       delay(wait);
-
       for (int i = 0; i < strip.numPixels(); i = i+3) {
         strip.setPixelColor(i + q, 0);        //turn every third pixel off
       }
